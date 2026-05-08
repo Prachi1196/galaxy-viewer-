@@ -1,0 +1,518 @@
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:#0a1628;font-family:'Share Tech Mono',monospace;overflow-x:hidden}
+
+/* ── ZONE SECTIONS ── */
+.zone{
+  min-height:100vh;
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  padding:4rem 2rem;
+}
+
+/* Zone backgrounds — gradient per depth */
+.zone-surface  {background:linear-gradient(180deg,#0077b6 0%,#0096c7 60%,#00b4d8 100%)}
+.zone-sunlight {background:linear-gradient(180deg,#00b4d8 0%,#0077b6 50%,#023e8a 100%)}
+.zone-twilight {background:linear-gradient(180deg,#023e8a 0%,#03045e 60%,#020024 100%)}
+.zone-midnight {background:linear-gradient(180deg,#020024 0%,#010012 60%,#000009 100%)}
+.zone-abyssal  {background:linear-gradient(180deg,#000009 0%,#000005 60%,#000000 100%)}
+.zone-hadal    {background:linear-gradient(180deg,#000000 0%,#000000 100%)}
+.zone-crust    {background:linear-gradient(180deg,#000000 0%,#1a0f00 40%,#2d1a00 100%)}
+.zone-mantle   {background:linear-gradient(180deg,#2d1a00 0%,#4a0000 50%,#800000 100%)}
+
+/* ── DEPTH INDICATOR (sticky) ── */
+.depth-bar{
+  position:fixed;right:1.2rem;top:50%;transform:translateY(-50%);
+  z-index:100;display:flex;flex-direction:column;align-items:center;gap:6px;
+}
+.depth-bar .db-line{width:2px;height:60px;background:rgba(255,255,255,0.1);border-radius:2px;position:relative}
+.depth-bar .db-dot{width:8px;height:8px;border-radius:50%;border:2px solid rgba(255,255,255,0.3);background:transparent;cursor:pointer;transition:background 0.2s}
+.depth-bar .db-dot:hover{background:rgba(255,255,255,0.4)}
+.depth-bar .db-label{font-size:7px;color:rgba(255,255,255,0.3);letter-spacing:0.1em;writing-mode:vertical-rl;text-orientation:mixed}
+
+/* ── ZONE HEADER ── */
+.zone-header{
+  position:absolute;top:2rem;left:50%;transform:translateX(-50%);
+  text-align:center;z-index:5;
+}
+.zone-depth{
+  font-family:'Orbitron',monospace;font-size:clamp(2rem,6vw,4rem);font-weight:900;
+  color:rgba(255,255,255,0.08);letter-spacing:0.1em;line-height:1;
+}
+.zone-name{
+  font-family:'Orbitron',monospace;font-size:clamp(0.9rem,2.5vw,1.3rem);font-weight:700;
+  letter-spacing:0.3em;color:#fff;text-shadow:0 0 20px currentColor;margin-top:4px;
+}
+.zone-range{font-size:9px;letter-spacing:0.2em;opacity:0.5;margin-top:4px}
+
+/* ── CONTENT GRID ── */
+.zone-content{
+  display:grid;grid-template-columns:1fr 1fr;gap:2rem;
+  max-width:860px;width:100%;margin-top:5rem;z-index:5;
+  align-items:center;
+}
+.zone-content.reverse{direction:rtl}
+.zone-content.reverse > *{direction:ltr}
+
+/* ── CREATURE DISPLAY ── */
+.creature-display{
+  display:flex;flex-direction:column;align-items:center;gap:1rem;
+}
+.creature-art{
+  font-size:clamp(80px,15vw,130px);
+  animation:float 4s ease-in-out infinite;
+  filter:drop-shadow(0 0 20px var(--glow,#00b4d888));
+  line-height:1;
+  text-align:center;
+}
+@keyframes float{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-14px) rotate(2deg)}}
+@keyframes floatR{0%,100%{transform:translateY(0) rotate(2deg)}50%{transform:translateY(-14px) rotate(-2deg)}}
+@keyframes pulse-glow{0%,100%{filter:drop-shadow(0 0 10px var(--glow,#fff))}50%{filter:drop-shadow(0 0 30px var(--glow,#fff)) drop-shadow(0 0 50px var(--glow,#fff))}}
+.creature-name{font-family:'Orbitron',monospace;font-size:clamp(0.8rem,2vw,1rem);font-weight:700;letter-spacing:0.15em;color:#fff;text-align:center}
+.creature-latin{font-size:9px;color:rgba(255,255,255,0.4);letter-spacing:0.1em;text-align:center;font-style:italic}
+
+/* ── INFO CARD ── */
+.info-card{
+  background:rgba(0,0,0,0.3);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:12px;
+  padding:1.4rem;
+  backdrop-filter:blur(10px);
+}
+.info-card h2{
+  font-family:'Orbitron',monospace;font-size:clamp(0.75rem,1.8vw,0.95rem);
+  font-weight:700;letter-spacing:0.2em;color:var(--zone-color,#fff);
+  margin-bottom:0.6rem;text-transform:uppercase;
+}
+.info-card p{font-size:11px;color:rgba(255,255,255,0.65);line-height:1.7;margin-bottom:0.9rem}
+.fact-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.fact{background:rgba(255,255,255,0.04);border-radius:6px;padding:8px;border:1px solid rgba(255,255,255,0.06)}
+.fact .fk{font-size:7.5px;color:rgba(255,255,255,0.35);letter-spacing:0.1em;margin-bottom:3px}
+.fact .fv{font-size:10px;color:#e0f7fa;font-weight:700}
+
+/* ── PARTICLES / BUBBLES ── */
+.bubbles{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:2}
+.bubble{
+  position:absolute;bottom:-20px;border-radius:50%;
+  background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
+  animation:rise var(--rd,8s) ease-in infinite;
+  animation-delay:var(--dl,0s);
+}
+@keyframes rise{0%{transform:translateY(0) translateX(0);opacity:0.5}100%{transform:translateY(-110vh) translateX(var(--dx,20px));opacity:0}}
+
+/* ── PARTICLES (bioluminescence) ── */
+.particle{
+  position:absolute;width:3px;height:3px;border-radius:50%;
+  background:var(--pc,#00ffff);
+  animation:drift var(--pd,6s) ease-in-out infinite alternate;
+  opacity:0;
+  animation-delay:var(--pdl,0s);
+}
+@keyframes drift{0%{opacity:0;transform:translate(0,0)}50%{opacity:0.8}100%{opacity:0;transform:translate(var(--px,30px),var(--py,-40px))}}
+
+/* ── LIGHT RAYS (surface) ── */
+.rays{position:absolute;top:0;left:50%;transform:translateX(-50%);pointer-events:none;z-index:1}
+.ray{
+  position:absolute;top:0;width:60px;height:400px;
+  background:linear-gradient(180deg,rgba(255,255,255,0.08),transparent);
+  transform-origin:top center;animation:sway 6s ease-in-out infinite alternate;
+}
+@keyframes sway{0%{transform:rotate(var(--ra,-15deg))}100%{transform:rotate(var(--rb,15deg))}}
+
+/* ── SCROLL ARROW ── */
+.scroll-hint{
+  position:absolute;bottom:1.5rem;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  animation:bob 2s ease-in-out infinite;z-index:5;
+}
+@keyframes bob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(6px)}}
+.scroll-hint span{font-size:8px;color:rgba(255,255,255,0.3);letter-spacing:0.2em}
+.scroll-hint .arr{font-size:18px;color:rgba(255,255,255,0.2)}
+
+/* ── ZONE COLORS ── */
+.zone-surface  {--zone-color:#90e0ef;--glow:#00b4d888}
+.zone-sunlight {--zone-color:#48cae4;--glow:#0096c788}
+.zone-twilight {--zone-color:#7b2d8b;--glow:#9c27b088}
+.zone-midnight {--zone-color:#00ffcc;--glow:#00ffcc88}
+.zone-abyssal  {--zone-color:#ff4444;--glow:#ff444488}
+.zone-hadal    {--zone-color:#ff8c00;--glow:#ff8c0088}
+.zone-crust    {--zone-color:#8b5a2b;--glow:#8b5a2b88}
+.zone-mantle   {--zone-color:#ff4500;--glow:#ff450088}
+
+/* ── PRESSURE METER ── */
+.pressure-bar{
+  display:flex;align-items:center;gap:8px;margin-top:0.7rem;
+}
+.pressure-bar .pk{font-size:8px;color:rgba(255,255,255,0.35);letter-spacing:0.08em;white-space:nowrap}
+.pressure-track{flex:1;height:4px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden}
+.pressure-fill{height:100%;border-radius:2px;background:var(--zone-color,#00b4d8);animation:fillIn 1.5s ease forwards}
+@keyframes fillIn{from{width:0}to{width:var(--pct,50%)}}
+
+/* ── RESPONSIVE ── */
+@media(max-width:600px){
+  .zone-content{grid-template-columns:1fr;margin-top:6rem;gap:1rem}
+  .zone-content.reverse{direction:ltr}
+  .creature-art{font-size:70px}
+  .depth-bar{display:none}
+}
+
+/* ── DANGER badge ── */
+.badge{display:inline-block;font-size:7.5px;letter-spacing:0.12em;padding:3px 8px;border-radius:3px;margin-bottom:8px;text-transform:uppercase;font-weight:700}
+.badge-safe{background:rgba(0,200,100,0.15);color:#00c864;border:1px solid rgba(0,200,100,0.3)}
+.badge-caution{background:rgba(255,200,0,0.15);color:#ffc800;border:1px solid rgba(255,200,0,0.3)}
+.badge-danger{background:rgba(255,60,60,0.15);color:#ff3c3c;border:1px solid rgba(255,60,60,0.3)}
+.badge-extreme{background:rgba(255,100,0,0.15);color:#ff6400;border:1px solid rgba(255,100,0,0.3)}
+
+/* ── DIVIDER ── */
+.zone-divider{
+  height:80px;position:relative;overflow:hidden;
+}
+.zone-divider::after{
+  content:'';position:absolute;inset:0;
+  background:inherit;
+}
+</style>
+
+<!-- ═══════════════ SURFACE ZONE ═══════════════ -->
+<section class="zone zone-surface" id="z1">
+
+  <!-- Light rays -->
+  <div class="rays">
+    <div class="ray" style="--ra:-20deg;--rb:10deg;left:-80px;opacity:0.6"></div>
+    <div class="ray" style="--ra:-10deg;--rb:20deg;left:0;opacity:0.4;width:40px"></div>
+    <div class="ray" style="--ra:5deg;--rb:25deg;left:60px;opacity:0.5"></div>
+    <div class="ray" style="--ra:-5deg;--rb:15deg;left:130px;opacity:0.3;width:80px"></div>
+    <div class="ray" style="--ra:-25deg;--rb:5deg;left:200px;opacity:0.4;width:45px"></div>
+  </div>
+
+  <!-- Bubbles -->
+  <div class="bubbles">
+    <div class="bubble" style="left:10%;width:8px;height:8px;--rd:7s;--dl:0s;--dx:15px"></div>
+    <div class="bubble" style="left:25%;width:5px;height:5px;--rd:5s;--dl:1s;--dx:-10px"></div>
+    <div class="bubble" style="left:50%;width:12px;height:12px;--rd:9s;--dl:2s;--dx:20px"></div>
+    <div class="bubble" style="left:70%;width:6px;height:6px;--rd:6s;--dl:0.5s;--dx:-15px"></div>
+    <div class="bubble" style="left:85%;width:9px;height:9px;--rd:8s;--dl:3s;--dx:10px"></div>
+    <div class="bubble" style="left:40%;width:4px;height:4px;--rd:4s;--dl:1.5s;--dx:8px"></div>
+  </div>
+
+  <div class="zone-header">
+    <div class="zone-depth">0m</div>
+    <div class="zone-name" style="color:#90e0ef">☀ Sunlit Zone</div>
+    <div class="zone-range">0 – 200 METRES</div>
+  </div>
+
+  <div class="zone-content">
+    <div class="creature-display">
+      <div class="creature-art" style="animation-name:float;--glow:#90e0ef88">🐬</div>
+      <div class="creature-name">Bottlenose Dolphin</div>
+      <div class="creature-latin">Tursiops truncatus</div>
+    </div>
+    <div class="info-card">
+      <span class="badge badge-safe">✓ SAFE ZONE</span>
+      <h2>Sunlit / Epipelagic Zone</h2>
+      <p>Sunlight penetrates fully here, powering photosynthesis and supporting the richest biodiversity in the ocean. Home to most marine life humans ever encounter.</p>
+      <div class="fact-grid">
+        <div class="fact"><div class="fk">DEPTH</div><div class="fv">0 – 200m</div></div>
+        <div class="fact"><div class="fk">LIGHT</div><div class="fv">Full sunlight</div></div>
+        <div class="fact"><div class="fk">TEMP</div><div class="fv">15° – 30°C</div></div>
+        <div class="fact"><div class="fk">PRESSURE</div><div class="fv">1 – 20 atm</div></div>
+        <div class="fact"><div class="fk">OTHER LIFE</div><div class="fv">Sharks, Tuna, Jellyfish</div></div>
+        <div class="fact"><div class="fk">VISIBILITY</div><div class="fv">Up to 200m</div></div>
+      </div>
+      <div class="pressure-bar"><span class="pk">PRESSURE</span><div class="pressure-track"><div class="pressure-fill" style="--pct:4%"></div></div></div>
+    </div>
+  </div>
+
+  <div class="scroll-hint">
+    <span>DIVE DEEPER</span>
+    <div class="arr">↓</div>
+  </div>
+</section>
+
+<!-- ═══════════════ TWILIGHT ZONE ═══════════════ -->
+<section class="zone zone-sunlight" id="z2">
+
+  <div class="bubbles">
+    <div class="bubble" style="left:15%;width:5px;height:5px;--rd:10s;--dl:0s;--dx:12px"></div>
+    <div class="bubble" style="left:55%;width:7px;height:7px;--rd:8s;--dl:2s;--dx:-10px"></div>
+    <div class="bubble" style="left:80%;width:4px;height:4px;--rd:6s;--dl:1s;--dx:8px"></div>
+  </div>
+
+  <!-- Bioluminescent particles -->
+  <div class="particle" style="--pc:#00ffff;top:30%;left:20%;--pd:5s;--pdl:0s;--px:40px;--py:-30px"></div>
+  <div class="particle" style="--pc:#7fff00;top:60%;left:70%;--pd:7s;--pdl:1s;--px:-30px;--py:-50px"></div>
+  <div class="particle" style="--pc:#00ffaa;top:45%;left:45%;--pd:4s;--pdl:2s;--px:20px;--py:-40px"></div>
+
+  <div class="zone-header">
+    <div class="zone-depth" style="font-size:clamp(1.5rem,5vw,3rem)">200m</div>
+    <div class="zone-name" style="color:#48cae4">🌙 Mesopelagic Zone</div>
+    <div class="zone-range">200 – 1,000 METRES</div>
+  </div>
+
+  <div class="zone-content reverse">
+    <div class="creature-display">
+      <div class="creature-art" style="animation-name:floatR;--glow:#9c27b088">🦑</div>
+      <div class="creature-name">Giant Squid</div>
+      <div class="creature-latin">Architeuthis dux</div>
+    </div>
+    <div class="info-card">
+      <span class="badge badge-caution">⚠ CAUTION ZONE</span>
+      <h2>Twilight Zone</h2>
+      <p>Sunlight fades into dim blue twilight. No photosynthesis occurs here. Many creatures migrate vertically — rising at night to feed, descending at dawn. Bioluminescence begins.</p>
+      <div class="fact-grid">
+        <div class="fact"><div class="fk">DEPTH</div><div class="fv">200 – 1,000m</div></div>
+        <div class="fact"><div class="fk">LIGHT</div><div class="fv">Faint / None</div></div>
+        <div class="fact"><div class="fk">TEMP</div><div class="fv">4° – 15°C</div></div>
+        <div class="fact"><div class="fk">PRESSURE</div><div class="fv">20 – 100 atm</div></div>
+        <div class="fact"><div class="fk">OTHER LIFE</div><div class="fv">Lanternfish, Swordfish</div></div>
+        <div class="fact"><div class="fk">VISIBILITY</div><div class="fv">Near zero</div></div>
+      </div>
+      <div class="pressure-bar"><span class="pk">PRESSURE</span><div class="pressure-track"><div class="pressure-fill" style="--pct:18%"></div></div></div>
+    </div>
+  </div>
+
+  <div class="scroll-hint">
+    <span>GO DEEPER</span>
+    <div class="arr">↓</div>
+  </div>
+</section>
+
+<!-- ═══════════════ MIDNIGHT ZONE ═══════════════ -->
+<section class="zone zone-twilight" id="z3">
+
+  <!-- Bioluminescent particles -->
+  <div class="particle" style="--pc:#ff00ff;top:25%;left:15%;--pd:6s;--pdl:0.5s;--px:50px;--py:-20px;width:4px;height:4px"></div>
+  <div class="particle" style="--pc:#00ffff;top:55%;left:80%;--pd:8s;--pdl:1.5s;--px:-40px;--py:-60px;width:4px;height:4px"></div>
+  <div class="particle" style="--pc:#ff88ff;top:70%;left:35%;--pd:5s;--pdl:0s;--px:30px;--py:-30px;width:3px;height:3px"></div>
+  <div class="particle" style="--pc:#aaffff;top:40%;left:60%;--pd:9s;--pdl:2s;--px:-20px;--py:-50px;width:5px;height:5px"></div>
+  <div class="particle" style="--pc:#ffaaff;top:80%;left:25%;--pd:7s;--pdl:3s;--px:60px;--py:-40px;width:3px;height:3px"></div>
+
+  <div class="zone-header">
+    <div class="zone-depth" style="font-size:clamp(1.3rem,4vw,2.5rem)">1,000m</div>
+    <div class="zone-name" style="color:#ce93d8">🔮 Bathypelagic Zone</div>
+    <div class="zone-range">1,000 – 4,000 METRES</div>
+  </div>
+
+  <div class="zone-content">
+    <div class="creature-display">
+      <div class="creature-art" style="animation:pulse-glow 3s ease-in-out infinite;--glow:#9c27b0cc;font-size:clamp(70px,12vw,110px)">🐡</div>
+      <div class="creature-name">Anglerfish</div>
+      <div class="creature-latin">Melanocetus johnsonii</div>
+    </div>
+    <div class="info-card">
+      <span class="badge badge-danger">✖ DANGER ZONE</span>
+      <h2>Midnight Zone</h2>
+      <p>Complete and permanent darkness. No sunlight ever reaches here. The crushing pressure, near-freezing temperatures and total blackness create one of Earth's most extreme environments.</p>
+      <div class="fact-grid">
+        <div class="fact"><div class="fk">DEPTH</div><div class="fv">1,000 – 4,000m</div></div>
+        <div class="fact"><div class="fk">LIGHT</div><div class="fv">Zero — pitch black</div></div>
+        <div class="fact"><div class="fk">TEMP</div><div class="fv">2° – 4°C</div></div>
+        <div class="fact"><div class="fk">PRESSURE</div><div class="fv">100 – 400 atm</div></div>
+        <div class="fact"><div class="fk">OTHER LIFE</div><div class="fv">Viperfish, Vampire Squid</div></div>
+        <div class="fact"><div class="fk">BIOLUMINESCENCE</div><div class="fv">Everywhere</div></div>
+      </div>
+      <div class="pressure-bar"><span class="pk">PRESSURE</span><div class="pressure-track"><div class="pressure-fill" style="--pct:45%"></div></div></div>
+    </div>
+  </div>
+
+  <div class="scroll-hint">
+    <span>KEEP DIVING</span>
+    <div class="arr">↓</div>
+  </div>
+</section>
+
+<!-- ═══════════════ ABYSSAL ZONE ═══════════════ -->
+<section class="zone zone-midnight" id="z4">
+
+  <div class="particle" style="--pc:#00ffcc;top:20%;left:10%;--pd:10s;--pdl:0s;--px:70px;--py:-30px;width:4px;height:4px"></div>
+  <div class="particle" style="--pc:#00ffaa;top:60%;left:75%;--pd:8s;--pdl:2s;--px:-50px;--py:-40px;width:3px;height:3px"></div>
+  <div class="particle" style="--pc:#00ffee;top:35%;left:50%;--pd:12s;--pdl:1s;--px:30px;--py:-70px;width:5px;height:5px"></div>
+  <div class="particle" style="--pc:#ffffff;top:75%;left:30%;--pd:7s;--pdl:4s;--px:-40px;--py:-30px;width:2px;height:2px"></div>
+
+  <div class="zone-header">
+    <div class="zone-depth" style="font-size:clamp(1.1rem,3.5vw,2.2rem)">4,000m</div>
+    <div class="zone-name" style="color:#00ffcc">☠ Abyssal Zone</div>
+    <div class="zone-range">4,000 – 6,000 METRES</div>
+  </div>
+
+  <div class="zone-content reverse">
+    <div class="creature-display">
+      <div class="creature-art" style="animation:pulse-glow 2s ease-in-out infinite;--glow:#00ffcc99;font-size:clamp(65px,11vw,105px)">🦀</div>
+      <div class="creature-name">Yeti Crab</div>
+      <div class="creature-latin">Kiwa hirsuta</div>
+    </div>
+    <div class="info-card">
+      <span class="badge badge-danger">☠ EXTREME DANGER</span>
+      <h2>Abyssal Zone</h2>
+      <p>The vast deep-sea plain. Nearly all life here relies on "marine snow" — organic particles drifting down from above. Hydrothermal vents create oases of life in total darkness.</p>
+      <div class="fact-grid">
+        <div class="fact"><div class="fk">DEPTH</div><div class="fv">4,000 – 6,000m</div></div>
+        <div class="fact"><div class="fk">LIGHT</div><div class="fv">Bioluminescence only</div></div>
+        <div class="fact"><div class="fk">TEMP</div><div class="fv">0° – 3°C</div></div>
+        <div class="fact"><div class="fk">PRESSURE</div><div class="fv">400 – 600 atm</div></div>
+        <div class="fact"><div class="fk">OTHER LIFE</div><div class="fv">Sea Cucumbers, Brittle Stars</div></div>
+        <div class="fact"><div class="fk">FOOD SOURCE</div><div class="fv">Marine snow, vents</div></div>
+      </div>
+      <div class="pressure-bar"><span class="pk">PRESSURE</span><div class="pressure-track"><div class="pressure-fill" style="--pct:72%"></div></div></div>
+    </div>
+  </div>
+
+  <div class="scroll-hint">
+    <span>ALMOST THE BOTTOM</span>
+    <div class="arr">↓</div>
+  </div>
+</section>
+
+<!-- ═══════════════ HADAL ZONE ═══════════════ -->
+<section class="zone zone-hadal" id="z5">
+
+  <div class="particle" style="--pc:#ff4400;top:30%;left:20%;--pd:15s;--pdl:0s;--px:50px;--py:-20px;width:3px;height:3px"></div>
+  <div class="particle" style="--pc:#ff8800;top:65%;left:65%;--pd:10s;--pdl:3s;--px:-30px;--py:-50px;width:4px;height:4px"></div>
+  <div class="particle" style="--pc:#ff2200;top:50%;left:40%;--pd:12s;--pdl:1s;--px:40px;--py:-60px;width:2px;height:2px"></div>
+  <div class="particle" style="--pc:#ffffff;top:80%;left:55%;--pd:8s;--pdl:2s;--px:-20px;--py:-30px;width:2px;height:2px"></div>
+  <div class="particle" style="--pc:#ff6600;top:20%;left:75%;--pd:11s;--pdl:5s;--px:-50px;--py:-40px;width:3px;height:3px"></div>
+
+  <div class="zone-header">
+    <div class="zone-depth" style="font-size:clamp(1rem,3vw,2rem)">6,000m+</div>
+    <div class="zone-name" style="color:#ff8c00">💀 Hadal Zone</div>
+    <div class="zone-range">6,000 – 11,000 METRES · MARIANA TRENCH</div>
+  </div>
+
+  <div class="zone-content">
+    <div class="creature-display">
+      <div class="creature-art" style="animation:pulse-glow 1.5s ease-in-out infinite;--glow:#ff440099;font-size:clamp(60px,10vw,100px)">🐙</div>
+      <div class="creature-name">Dumbo Octopus</div>
+      <div class="creature-latin">Grimpoteuthis bathynectes</div>
+    </div>
+    <div class="info-card" style="border-color:rgba(255,100,0,0.2)">
+      <span class="badge badge-extreme">💀 UNSURVIVABLE</span>
+      <h2>Hadal / Trench Zone</h2>
+      <p>The deepest places on Earth — ocean trenches like the Mariana Trench. The pressure here would instantly crush a human. Yet life persists: snailfish, amphipods and microbes thrive.</p>
+      <div class="fact-grid">
+        <div class="fact"><div class="fk">DEPTH</div><div class="fv">6,000 – 11,034m</div></div>
+        <div class="fact"><div class="fk">LIGHT</div><div class="fv">Absolute zero</div></div>
+        <div class="fact"><div class="fk">TEMP</div><div class="fv">1° – 4°C</div></div>
+        <div class="fact"><div class="fk">PRESSURE</div><div class="fv">600 – 1,100 atm</div></div>
+        <div class="fact"><div class="fk">OTHER LIFE</div><div class="fv">Snailfish, Amphipods</div></div>
+        <div class="fact"><div class="fk">DEEPEST POINT</div><div class="fv">Challenger Deep 11,034m</div></div>
+      </div>
+      <div class="pressure-bar"><span class="pk">PRESSURE</span><div class="pressure-track"><div class="pressure-fill" style="--pct:100%;background:linear-gradient(90deg,#ff4400,#ff8c00)"></div></div></div>
+      <p style="font-size:9px;color:rgba(255,100,0,0.6);margin-top:10px;line-height:1.6">⚠ At Challenger Deep, pressure is 1,086 atm — equivalent to 50 jumbo jets stacked on your thumb.</p>
+    </div>
+  </div>
+
+  <!-- Bottom -->
+  <div style="position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(180deg,transparent,rgba(139,90,43,0.3));pointer-events:none"></div>
+  <div style="position:absolute;bottom:0;left:0;right:0;height:20px;background:rgba(101,67,33,0.4);pointer-events:none;border-top:1px solid rgba(139,90,43,0.3)"></div>
+
+</section>
+
+<!-- ═══════════════ CRUST ZONE ═══════════════ -->
+<section class="zone zone-crust" id="z6">
+
+  <div class="particle" style="--pc:#8b5a2b;top:20%;left:15%;--pd:12s;--pdl:0s;--px:30px;--py:-20px;width:3px;height:3px"></div>
+  <div class="particle" style="--pc:#4e342e;top:60%;left:80%;--pd:10s;--pdl:2s;--px:-20px;--py:-40px;width:4px;height:4px"></div>
+  <div class="particle" style="--pc:#ffcc80;top:40%;left:50%;--pd:8s;--pdl:1s;--px:20px;--py:-30px;width:2px;height:2px"></div>
+
+  <div class="zone-header">
+    <div class="zone-depth" style="font-size:clamp(1rem,3vw,2rem)">11,000m</div>
+    <div class="zone-name" style="color:#8b5a2b">🪨 The Oceanic Crust</div>
+    <div class="zone-range">11,000 – 35,000 METRES · THE LITHOSPHERE</div>
+  </div>
+
+  <div class="zone-content reverse">
+    <div class="creature-display">
+      <div class="creature-art" style="animation:pulse-glow 2s ease-in-out infinite;--glow:#8b5a2b99;font-size:clamp(60px,10vw,100px)">🦠</div>
+      <div class="creature-name">Endolithic Microbes</div>
+      <div class="creature-latin">Subsurface extremophiles</div>
+    </div>
+    <div class="info-card" style="border-color:rgba(139,90,43,0.2)">
+      <span class="badge badge-extreme" style="background:rgba(139,90,43,0.15);color:#8b5a2b;border-color:rgba(139,90,43,0.3)">🪨 SOLID ROCK</span>
+      <h2>Oceanic Crust</h2>
+      <p>Beyond the ocean water lies the solid basaltic rock of the crust. Temperatures begin to rise steadily as we descend toward the Earth's interior. Life here exists inside the tiny pores of rocks.</p>
+      <div class="fact-grid">
+        <div class="fact"><div class="fk">DEPTH</div><div class="fv">11,000 – 35,000m</div></div>
+        <div class="fact"><div class="fk">MATERIAL</div><div class="fv">Basalt & Gabbro</div></div>
+        <div class="fact"><div class="fk">TEMP</div><div class="fv">100° – 400°C</div></div>
+        <div class="fact"><div class="fk">PRESSURE</div><div class="fv">3,000+ atm</div></div>
+        <div class="fact"><div class="fk">LIFE</div><div class="fv">Endoliths</div></div>
+        <div class="fact"><div class="fk">ENVIRONMENT</div><div class="fv">Porous Rock</div></div>
+      </div>
+      <div class="pressure-bar"><span class="pk">PRESSURE</span><div class="pressure-track"><div class="pressure-fill" style="--pct:120%;background:#5d4037"></div></div></div>
+    </div>
+  </div>
+
+  <div class="scroll-hint">
+    <span>TOWARD THE MANTLE</span>
+    <div class="arr">↓</div>
+  </div>
+</section>
+
+<!-- ═══════════════ MANTLE ZONE ═══════════════ -->
+<section class="zone zone-mantle" id="z7">
+
+  <!-- Heat haze / Lava particles -->
+  <div class="particle" style="--pc:#ff4500;top:10%;left:25%;--pd:4s;--pdl:0s;--px:50px;--py:-100px;width:5px;height:5px"></div>
+  <div class="particle" style="--pc:#ff8c00;top:50%;left:75%;--pd:5s;--pdl:1s;--px:-40px;--py:-80px;width:4px;height:4px"></div>
+  <div class="particle" style="--pc:#ff0000;top:80%;left:40%;--pd:3s;--pdl:0.5s;--px:20px;--py:-120px;width:6px;height:6px"></div>
+  <div class="particle" style="--pc:#ffff00;top:30%;left:60%;--pd:6s;--pdl:2s;--px:-30px;--py:-90px;width:3px;height:3px"></div>
+
+  <div class="zone-header">
+    <div class="zone-depth" style="font-size:clamp(1rem,3vw,2rem)">35,000m+</div>
+    <div class="zone-name" style="color:#ff4500">🔥 Upper Mantle</div>
+    <div class="zone-range">35,000m+ · THE ASTHENOSPHERE</div>
+  </div>
+
+  <div class="zone-content">
+    <div class="creature-display">
+      <div class="creature-art" style="animation:pulse-glow 1s ease-in-out infinite;--glow:#ff4500cc;font-size:clamp(60px,10vw,100px)">🌋</div>
+      <div class="creature-name">Magma Flow</div>
+      <div class="creature-latin">Semi-plastic rock</div>
+    </div>
+    <div class="info-card" style="border-color:rgba(255,69,0,0.3)">
+      <span class="badge badge-extreme" style="background:rgba(255,0,0,0.2);color:#ff4500;border-color:#ff4500">🔥 MOLTEN REALM</span>
+      <h2>Upper Mantle</h2>
+      <p>The boundary where rock becomes semi-plastic and begins to flow. This is the engine of plate tectonics, where intense heat and pressure create a slow-moving sea of molten silicate.</p>
+      <div class="fact-grid">
+        <div class="fact"><div class="fk">DEPTH</div><div class="fv">35,000 – 660,000m</div></div>
+        <div class="fact"><div class="fk">STATE</div><div class="fv">Viscous Solid</div></div>
+        <div class="fact"><div class="fk">TEMP</div><div class="fv">500° – 900°C</div></div>
+        <div class="fact"><div class="fk">PRESSURE</div><div class="fv">10,000+ atm</div></div>
+        <div class="fact"><div class="fk">LIFE</div><div class="fv">None (Sterile)</div></div>
+        <div class="fact"><div class="fk">ACTIVITY</div><div class="fv">Convection</div></div>
+      </div>
+      <div class="pressure-bar"><span class="pk">PRESSURE</span><div class="pressure-track"><div class="pressure-fill" style="--pct:150%;background:linear-gradient(90deg,#ff0000,#ff8c00)"></div></div></div>
+    </div>
+  </div>
+
+  <!-- Bottom -->
+  <div style="position:absolute;bottom:0;left:0;right:0;height:100px;background:linear-gradient(0deg,rgba(255,69,0,0.2),transparent);pointer-events:none"></div>
+</section>
+
+<!-- Sticky depth nav -->
+<div class="depth-bar">
+  <a href="#z1"><div class="db-dot" title="Surface"></div></a>
+  <div class="db-line"></div>
+  <a href="#z2"><div class="db-dot" title="Twilight"></div></a>
+  <div class="db-line"></div>
+  <a href="#z3"><div class="db-dot" title="Midnight"></div></a>
+  <div class="db-line"></div>
+  <a href="#z4"><div class="db-dot" title="Abyssal"></div></a>
+  <div class="db-line"></div>
+  <a href="#z5"><div class="db-dot" title="Hadal"></div></a>
+  <div class="db-line" style="height:30px"></div>
+  <a href="#z6"><div class="db-dot" title="Crust"></div></a>
+  <div class="db-line" style="height:30px"></div>
+  <a href="#z7"><div class="db-dot" title="Mantle"></div></a>
+</div>
+
+<script>
+const sf=document.createElement('div');sf.className='starfield';
+for(let i=0;i<60;i++){const p=document.createElement('div');p.className='particle';p.style.cssText=`--pc:rgba(255,255,255,${(Math.random()*0.3+0.05).toFixed(2)});top:${Math.random()*100}%;left:${Math.random()*100}%;--pd:${(Math.random()*10+5).toFixed(1)}s;--pdl:${(Math.random()*8).toFixed(1)}s;--px:${(Math.random()*60-30).toFixed(0)}px;--py:${(Math.random()*-60-10).toFixed(0)}px;width:2px;height:2px`;document.body.appendChild(p)}
+</script>
